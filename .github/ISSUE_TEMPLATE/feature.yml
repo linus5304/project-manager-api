@@ -1,0 +1,42 @@
+name: Feature
+description: New feature or enhancement
+title: "feat: "
+labels: ["type:feature"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / Goal
+      description: What are we trying to achieve?
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: Checklist of what must be true to call this done.
+      value: |
+        - [ ]
+        - [ ]
+    validations:
+      required: true
+
+  - type: textarea
+    id: design
+    attributes:
+      label: Design Notes
+      description: API shape, packages touched, edge cases, error behavior.
+    validations:
+      required: false
+
+  - type: textarea
+    id: testplan
+    attributes:
+      label: Test Plan
+      value: |
+        - [ ] Unit tests
+        - [ ] Integration tests (if DB)
+        - [ ] Manual verification
+    validations:
+      required: true
