@@ -54,11 +54,11 @@ func errorResponse(w http.ResponseWriter, r *http.Request, status int, message s
 	_ = writeJSON(w, status, env, nil)
 }
 
-func badRequestResponse(w http.ResponseWriter, r *http.Request, message string) {
-	errorResponse(w, r, http.StatusBadRequest, message)
+func badRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
+	errorResponse(w, r, http.StatusBadRequest, err.Error())
 }
 
-func serverErrorResponse(w http.ResponseWriter, r *http.Request) {
+func serverErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 	errorResponse(w, r, http.StatusInternalServerError, "the server encountered a problem and could not process your request")
 }
 
