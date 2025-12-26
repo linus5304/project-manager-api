@@ -3,6 +3,7 @@ package httpapi
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -14,14 +15,15 @@ func TestCreateProject_201(t *testing.T) {
 	t.Cleanup(ts.Close)
 
 	body := []byte(`{"name": "New Project"}`)
-	res, err := http.Post(ts.URL+"/projects", "application/json", bytes.NewReader(body))
+	res, err := http.Post(ts.URL+"/v1/projects", "application/json", bytes.NewReader(body))
 	if err != nil {
-		t.Fatalf("POST /projects failed: %v", err)
+		t.Fatalf("POST /v1/projects failed: %v", err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusCreated {
-		t.Fatalf("expected status 201 Created; got %d", res.StatusCode)
+		b, _ := io.ReadAll(res.Body)
+		t.Fatalf("expected status 201 Created; got %d; body=%s", res.StatusCode, string(b))
 	}
 
 	var got map[string]any
@@ -29,10 +31,13 @@ func TestCreateProject_201(t *testing.T) {
 		t.Fatalf("decode response body: %v", err)
 	}
 
-	if got["name"] != "New Project" {
+	name, ok := got["name"].(string)
+	if !ok || name != "New Project" {
 		t.Fatalf("expected project name %q; got %q", "New Project", got["name"])
 	}
-	if got["id"] == "" {
+
+	id, ok := got["id"].(string)
+	if !ok || id == "" {
 		t.Fatal("expected non-empty project ID")
 	}
 }
@@ -43,13 +48,14 @@ func TestCreateProject_400_WhenNameMissing(t *testing.T) {
 	t.Cleanup(ts.Close)
 
 	body := []byte(`{"name": ""}`)
-	res, err := http.Post(ts.URL+"/projects", "application/json", bytes.NewReader(body))
+	res, err := http.Post(ts.URL+"/v1/projects", "application/json", bytes.NewReader(body))
 	if err != nil {
-		t.Fatalf("POST failed: %v", err)
+		t.Fatalf("POST /v1/projects failed: %v", err)
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusBadRequest {
-		t.Fatalf("expected status 400; got %d", res.StatusCode)
+		b, _ := io.ReadAll(res.Body)
+		t.Fatalf("expected status 400; got %d; body=%s", res.StatusCode, string(b))
 	}
 }
