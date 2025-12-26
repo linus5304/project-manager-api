@@ -33,12 +33,12 @@ func TestCreateProject_201(t *testing.T) {
 
 	name, ok := got["name"].(string)
 	if !ok || name != "New Project" {
-		t.Fatalf("expected project name %q; got %q", "New Project", got["name"])
+		t.Fatalf("expected project name %#v; got %q", "New Project", got["name"])
 	}
 
 	id, ok := got["id"].(string)
 	if !ok || id == "" {
-		t.Fatal("expected non-empty project ID")
+		t.Fatalf("expected non-empty project ID, got %#v", got["id"])
 	}
 }
 
