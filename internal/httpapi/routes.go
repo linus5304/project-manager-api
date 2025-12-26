@@ -7,6 +7,7 @@ func (app *Application) Routes() http.Handler {
 
 	mux.HandleFunc("/healthz", app.healthz)
 	mux.HandleFunc("POST /v1/projects", app.createProject)
+	mux.HandleFunc("GET /v1/projects/{id}", app.getProject)
 
 	return mux
 }
