@@ -195,9 +195,9 @@ func TestListProjects_200_NewestFirst(t *testing.T) {
 		}
 	}
 
-	create("Project A")
-	create("Project B")
-	create("Project C")
+	create("Alpha")
+	create("Beta")
+	create("Gamma")
 
 	res, err := http.Get(ts.URL + "/v1/projects")
 	if err != nil {
@@ -229,8 +229,8 @@ func TestListProjects_200_NewestFirst(t *testing.T) {
 		t.Fatalf("expected project object, got %#v", raw[0])
 	}
 	name, _ := first["name"].(string)
-	if name != "Project C" {
-		t.Fatalf("expected first project to be 'Project C', got %q", name)
+	if name != "Gamma" {
+		t.Fatalf("expected first project to be 'Gamma', got %q", name)
 	}
 }
 
