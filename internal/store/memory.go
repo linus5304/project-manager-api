@@ -2,6 +2,7 @@ package store
 
 import (
 	"errors"
+	"sort"
 	"sync"
 	"time"
 
@@ -46,4 +47,21 @@ func (s *MemoryStore) GetProject(id uuid.UUID) (domain.Project, error) {
 	}
 
 	return p, nil
+}
+
+func (s *MemoryStore) ListProjects() ([]domain.Project, error) {
+	s.mu.RLock()
+	projects := make([]domain.Project, 0, len(s.projects))
+	for _, p := range s.projects {
+		projects = append(projects, p)
+	}
+	s.mu.RUnlock()
+
+	sort.Slice(projects, func(i, j int) bool {
+		if projects[i].CreatedAt.Equal(projects[j].CreatedAt) {
+			return projects[i].ID.String() > projects[j].ID.String()
+		}
+		return projects[i].CreatedAt.After(projects[j].CreatedAt)
+	})
+	return projects, nil
 }

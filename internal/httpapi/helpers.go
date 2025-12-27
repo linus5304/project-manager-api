@@ -3,8 +3,10 @@ package httpapi
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 )
 
 func writeJSON(w http.ResponseWriter, status int, data any, headers http.Header) error {
@@ -41,6 +43,36 @@ func readJSON(w http.ResponseWriter, r *http.Request, dst any) error {
 		return errors.New("body must only contain a single JSON value")
 	}
 
+	return nil
+}
+
+func readIntQuery(r *http.Request, key string, defaultValue int) (int, error) {
+	qs := r.URL.Query()
+	s := qs.Get(key)
+	if s == "" {
+		return defaultValue, nil
+	}
+
+	i, err := strconv.Atoi(s)
+	if err != nil {
+		return 0, fmt.Errorf("query parameter %q must be an integer", key)
+	}
+
+	return i, nil
+}
+
+func validatePageParams(page, pageSize int) error {
+	if page < 1 {
+		return errors.New("page must be >= 1")
+	}
+
+	if pageSize < 1 {
+		return errors.New("page_size must be >= 1")
+	}
+
+	if pageSize > 100 {
+		return errors.New("page_size must be <= 100")
+	}
 	return nil
 }
 
