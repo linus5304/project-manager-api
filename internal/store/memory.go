@@ -10,16 +10,21 @@ import (
 	"github.com/linus5304/project-manager-api/internal/domain"
 )
 
-var ErrNotFound = errors.New("not found")
+var (
+	ErrNotFound        = errors.New("not found")
+	ErrProjectNotFound = errors.New("project not found")
+)
 
 type MemoryStore struct {
 	mu       sync.RWMutex
 	projects map[uuid.UUID]domain.Project
+	tasks    map[uuid.UUID]map[uuid.UUID]domain.Task
 }
 
 func NewMemoryStore() *MemoryStore {
 	return &MemoryStore{
 		projects: make(map[uuid.UUID]domain.Project),
+		tasks:    make(map[uuid.UUID]map[uuid.UUID]domain.Task),
 	}
 }
 
@@ -64,4 +69,54 @@ func (s *MemoryStore) ListProjects() ([]domain.Project, error) {
 		return projects[i].CreatedAt.After(projects[j].CreatedAt)
 	})
 	return projects, nil
+}
+
+func (s *MemoryStore) InsertTask(projectID uuid.UUID, title, description string) (domain.Task, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	// Ensure the project exists
+	if _, ok := s.projects[projectID]; !ok {
+		return domain.Task{}, ErrProjectNotFound
+	}
+
+	t := domain.Task{
+		ID:          uuid.New(),
+		ProjectID:   projectID,
+		Title:       title,
+		Description: description,
+		Status:      "todo",
+		CreatedAt:   time.Now().UTC(),
+	}
+
+	if s.tasks[projectID] == nil {
+		s.tasks[projectID] = make(map[uuid.UUID]domain.Task)
+	}
+	s.tasks[projectID][t.ID] = t
+	return t, nil
+}
+
+func (s *MemoryStore) ListTasks(projectID uuid.UUID) ([]domain.Task, error) {
+	s.mu.RLock()
+	projectTasks, ok := s.tasks[projectID]
+
+	if !ok || len(projectTasks) == 0 {
+		s.mu.RUnlock()
+		return []domain.Task{}, nil
+	}
+
+	tasks := make([]domain.Task, 0, len(projectTasks))
+	for _, t := range projectTasks {
+		tasks = append(tasks, t)
+	}
+	s.mu.RUnlock()
+
+	sort.Slice(tasks, func(i, j int) bool {
+		if tasks[i].CreatedAt.Equal(tasks[j].CreatedAt) {
+			return tasks[i].ID.String() > tasks[j].ID.String()
+		}
+		return tasks[i].CreatedAt.After(tasks[j].CreatedAt)
+	})
+
+	return tasks, nil
 }
