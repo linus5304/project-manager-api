@@ -12,6 +12,7 @@ func (app *Application) Routes() http.Handler {
 
 	mux.HandleFunc("POST /v1/projects/{id}/tasks", app.createTask)
 	mux.HandleFunc("GET /v1/projects/{id}/tasks", app.listTasks)
+	mux.HandleFunc("PATCH /v1/projects/{projectId}/tasks/{taskId}", app.updateTask)
 
 	h := http.Handler(mux)
 	h = app.logRequestMiddleware(h)
