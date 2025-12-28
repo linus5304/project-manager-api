@@ -77,3 +77,82 @@ func (app *Application) listTasks(w http.ResponseWriter, r *http.Request) {
 
 	_ = writeJSON(w, http.StatusOK, env, nil)
 }
+
+type updateTaskInput struct {
+	Title       *string `json:"title,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Status      *string `json:"status,omitempty"`
+}
+
+func (app *Application) updateTask(w http.ResponseWriter, r *http.Request) {
+	projectIDStr := r.PathValue("projectId")
+	projectID, err := uuid.Parse(projectIDStr)
+	if err != nil {
+		badRequestResponse(w, r, errors.New("invalid project id"))
+		return
+	}
+	taskIDStr := r.PathValue("taskId")
+	taskID, err := uuid.Parse(taskIDStr)
+	if err != nil {
+		badRequestResponse(w, r, errors.New("invalid task id"))
+		return
+	}
+
+	var input updateTaskInput
+	if err := readJSON(w, r, &input); err != nil {
+		badRequestResponse(w, r, err)
+		return
+	}
+
+	// Must provide at least one field for PATCH
+	if input.Title == nil && input.Description == nil && input.Status == nil {
+		badRequestResponse(w, r, errors.New("body must contain at least one of title, description or status"))
+		return
+	}
+
+	// Normalize + validate
+	if input.Title != nil {
+		t := strings.TrimSpace(*input.Title)
+		if t == "" {
+			badRequestResponse(w, r, errors.New("title cannot be empty"))
+			return
+		}
+		input.Title = &t
+	}
+
+	if input.Description != nil {
+		d := strings.TrimSpace(*input.Description)
+		input.Description = &d
+	}
+
+	if input.Status != nil {
+		s := strings.TrimSpace(*input.Status)
+		switch s {
+		case "todo", "doing", "done":
+			// ok
+		default:
+			badRequestResponse(w, r, errors.New("status must be one of: todo, doing, done"))
+			return
+		}
+		input.Status = &s
+	}
+
+	update := store.TaskUpdate{
+		Title:       input.Title,
+		Description: input.Description,
+		Status:      input.Status,
+	}
+
+	updated, err := app.store.UpdateTask(projectID, taskID, update)
+	if err != nil {
+		if errors.Is(err, store.ErrProjectNotFound) || errors.Is(err, store.ErrTaskNotFound) {
+			notFoundResponse(w, r)
+			return
+		}
+		serverErrorResponse(w, r, err)
+		return
+	}
+
+	_ = writeJSON(w, http.StatusOK, updated, nil)
+
+}

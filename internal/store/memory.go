@@ -13,6 +13,7 @@ import (
 var (
 	ErrNotFound        = errors.New("not found")
 	ErrProjectNotFound = errors.New("project not found")
+	ErrTaskNotFound    = errors.New("task not found")
 )
 
 type MemoryStore struct {
@@ -124,4 +125,34 @@ func (s *MemoryStore) ListTasks(projectID uuid.UUID) ([]domain.Task, error) {
 	})
 
 	return tasks, nil
+}
+
+func (s *MemoryStore) UpdateTask(projectID, taskID uuid.UUID, update TaskUpdate) (domain.Task, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, ok := s.projects[projectID]; !ok {
+		return domain.Task{}, ErrProjectNotFound
+	}
+
+	taskMap, ok := s.tasks[projectID]
+	if !ok {
+		return domain.Task{}, ErrTaskNotFound
+	}
+
+	task, ok := taskMap[taskID]
+	if !ok {
+		return domain.Task{}, ErrTaskNotFound
+	}
+	if update.Title != nil {
+		task.Title = *update.Title
+	}
+	if update.Description != nil {
+		task.Description = *update.Description
+	}
+	if update.Status != nil {
+		task.Status = *update.Status
+	}
+	s.tasks[projectID][taskID] = task
+	return task, nil
 }

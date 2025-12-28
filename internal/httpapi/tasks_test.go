@@ -37,6 +37,28 @@ func createProject(t *testing.T, ts *httptest.Server, name string) string {
 	return id
 }
 
+func createTask(t *testing.T, ts *httptest.Server, projectID, title, desc string) map[string]any {
+	t.Helper()
+
+	body := []byte(`{"title": "` + title + `", "description": "` + desc + `"}`)
+	res, err := http.Post(ts.URL+"/v1/projects/"+projectID+"/tasks", "application/json", bytes.NewReader(body))
+	if err != nil {
+		t.Fatalf("POST /v1/projects/%s/tasks failed: %v", projectID, err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusCreated {
+		b, _ := io.ReadAll(res.Body)
+		t.Fatalf("expected status 201 Created; got %d; body=%s", res.StatusCode, string(b))
+	}
+
+	var got map[string]any
+	if err := json.NewDecoder(res.Body).Decode(&got); err != nil {
+		t.Fatalf("decode response body: %v", err)
+	}
+	return got
+}
+
 func TestCreateTask_201_DefaultTodo(t *testing.T) {
 	app := NewApplication()
 	ts := httptest.NewServer(app.Routes())
@@ -224,5 +246,148 @@ func TestListTasks_200_NewestFirst(t *testing.T) {
 	first, _ := tasks[0].(map[string]any)
 	if first["title"] != "second" {
 		t.Fatalf("expected newest-first 'second'; got %q", first["title"])
+	}
+}
+
+func TestUpdateTask_200_StatusOnly(t *testing.T) {
+	app := NewApplication()
+	ts := httptest.NewServer(app.Routes())
+	t.Cleanup(ts.Close)
+
+	pid := createProject(t, ts, "Alpha")
+	task := createTask(t, ts, pid, "T1", "D1")
+	tid, _ := task["id"].(string)
+
+	patch := []byte(`{"status": "doing"}`)
+	req, _ := http.NewRequest(http.MethodPatch, ts.URL+"/v1/projects/"+pid+"/tasks/"+tid, bytes.NewReader(patch))
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("PATCH /v1/projects/%s/tasks/%s failed: %v", pid, tid, err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(res.Body)
+		t.Fatalf("expected status 200 OK; got %d; body=%s", res.StatusCode, string(b))
+	}
+
+	var got map[string]any
+	if err := json.NewDecoder(res.Body).Decode(&got); err != nil {
+		t.Fatalf("decode response body: %v", err)
+	}
+	if got["status"] != "doing" {
+		t.Fatalf("expected status 'doing'; got %q", got["status"])
+	}
+	if got["title"] != "T1" {
+		t.Fatalf("expected title 'T1'; got %q", got["title"])
+	}
+}
+
+func TestUpdateTask_200_TitleAndDescription(t *testing.T) {
+	app := NewApplication()
+	ts := httptest.NewServer(app.Routes())
+	t.Cleanup(ts.Close)
+
+	pid := createProject(t, ts, "Alpha")
+	task := createTask(t, ts, pid, "T1", "D1")
+	tid, _ := task["id"].(string)
+
+	patch := []byte(`{"title": "T1 Updated", "description": "D1 Updated"}`)
+	req, _ := http.NewRequest(http.MethodPatch, ts.URL+"/v1/projects/"+pid+"/tasks/"+tid, bytes.NewReader(patch))
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("PATCH /v1/projects/%s/tasks/%s failed: %v", pid, tid, err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(res.Body)
+		t.Fatalf("expected status 200 OK; got %d; body=%s", res.StatusCode, string(b))
+	}
+
+	var got map[string]any
+	if err := json.NewDecoder(res.Body).Decode(&got); err != nil {
+		t.Fatalf("decode response body: %v", err)
+	}
+	if got["title"] != "T1 Updated" || got["description"] != "D1 Updated" {
+		t.Fatalf("expected updated fields; got %#v", got)
+	}
+}
+
+func TestUpdateTask_400_EmptyBody(t *testing.T) {
+	app := NewApplication()
+	ts := httptest.NewServer(app.Routes())
+	t.Cleanup(ts.Close)
+
+	pid := createProject(t, ts, "Alpha")
+	task := createTask(t, ts, pid, "T1", "D1")
+	tid, _ := task["id"].(string)
+
+	patch := []byte(`{}`)
+	req, _ := http.NewRequest(http.MethodPatch, ts.URL+"/v1/projects/"+pid+"/tasks/"+tid, bytes.NewReader(patch))
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("PATCH /v1/projects/%s/tasks/%s failed: %v", pid, tid, err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusBadRequest {
+		b, _ := io.ReadAll(res.Body)
+		t.Fatalf("expected status 400 Bad Request; got %d; body=%s", res.StatusCode, string(b))
+	}
+}
+
+func TestUpdateTask_400_InvalidStatus(t *testing.T) {
+	app := NewApplication()
+	ts := httptest.NewServer(app.Routes())
+	t.Cleanup(ts.Close)
+
+	pid := createProject(t, ts, "Alpha")
+	task := createTask(t, ts, pid, "T1", "D1")
+	tid, _ := task["id"].(string)
+
+	patch := []byte(`{"status": "invalid-status"}`)
+	req, _ := http.NewRequest(http.MethodPatch, ts.URL+"/v1/projects/"+pid+"/tasks/"+tid, bytes.NewReader(patch))
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("PATCH /v1/projects/%s/tasks/%s failed: %v", pid, tid, err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusBadRequest {
+		b, _ := io.ReadAll(res.Body)
+		t.Fatalf("expected status 400 Bad Request; got %d; body=%s", res.StatusCode, string(b))
+	}
+}
+
+func TestUpdateTask_404_TaskMissing(t *testing.T) {
+	app := NewApplication()
+	ts := httptest.NewServer(app.Routes())
+	t.Cleanup(ts.Close)
+
+	pid := createProject(t, ts, "Alpha")
+	nonExistentTaskID := "00000000-0000-0000-0000-000000000000"
+
+	patch := []byte(`{"status": "doing"}`)
+	req, _ := http.NewRequest(http.MethodPatch, ts.URL+"/v1/projects/"+pid+"/tasks/"+nonExistentTaskID, bytes.NewReader(patch))
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("PATCH /v1/projects/%s/tasks/%s failed: %v", pid, nonExistentTaskID, err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusNotFound {
+		b, _ := io.ReadAll(res.Body)
+		t.Fatalf("expected status 404 Not Found; got %d; body=%s", res.StatusCode, string(b))
 	}
 }
