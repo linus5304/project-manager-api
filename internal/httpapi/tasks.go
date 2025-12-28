@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+	"github.com/linus5304/project-manager-api/internal/store"
 )
 
 type createTaskInput struct {
@@ -17,7 +18,7 @@ func (app *Application) createTask(w http.ResponseWriter, r *http.Request) {
 	projectIDStr := r.PathValue("id")
 	projectID, err := uuid.Parse(projectIDStr)
 	if err != nil {
-		badRequestResponse(w, r, errors.New("invalid project ID"))
+		badRequestResponse(w, r, errors.New("invalid project id"))
 		return
 	}
 
@@ -37,6 +38,10 @@ func (app *Application) createTask(w http.ResponseWriter, r *http.Request) {
 
 	t, err := app.store.InsertTask(projectID, input.Title, input.Description)
 	if err != nil {
+		if errors.Is(err, store.ErrProjectNotFound) {
+			notFoundResponse(w, r)
+			return
+		}
 		serverErrorResponse(w, r, err)
 		return
 	}
@@ -48,11 +53,15 @@ func (app *Application) listTasks(w http.ResponseWriter, r *http.Request) {
 	projectIDStr := r.PathValue("id")
 	projectID, err := uuid.Parse(projectIDStr)
 	if err != nil {
-		badRequestResponse(w, r, errors.New("invalid project ID"))
+		badRequestResponse(w, r, errors.New("invalid project id"))
 		return
 	}
 	tasks, err := app.store.ListTasks(projectID)
 	if err != nil {
+		if errors.Is(err, store.ErrProjectNotFound) {
+			notFoundResponse(w, r)
+			return
+		}
 		serverErrorResponse(w, r, err)
 		return
 	}

@@ -98,6 +98,11 @@ func (s *MemoryStore) InsertTask(projectID uuid.UUID, title, description string)
 
 func (s *MemoryStore) ListTasks(projectID uuid.UUID) ([]domain.Task, error) {
 	s.mu.RLock()
+	if _, ok := s.projects[projectID]; !ok {
+		s.mu.RUnlock()
+		return []domain.Task{}, ErrProjectNotFound
+	}
+
 	projectTasks, ok := s.tasks[projectID]
 
 	if !ok || len(projectTasks) == 0 {
