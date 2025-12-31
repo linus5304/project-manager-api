@@ -7,7 +7,7 @@ import (
 )
 
 func TestRequestIDMiddleware_GeneratesHeader(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 
@@ -24,7 +24,7 @@ func TestRequestIDMiddleware_GeneratesHeader(t *testing.T) {
 }
 
 func TestRequestIDMiddleware_PassthroughHeader(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 
@@ -46,7 +46,7 @@ func TestRequestIDMiddleware_PassthroughHeader(t *testing.T) {
 }
 
 func TestRecoverPanicMiddleware_Returns500(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 
 	// create a handler that panics
 	panicHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

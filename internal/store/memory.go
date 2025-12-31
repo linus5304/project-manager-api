@@ -1,6 +1,7 @@
 package store
 
 import (
+	"context"
 	"errors"
 	"sort"
 	"sync"
@@ -29,7 +30,7 @@ func NewMemoryStore() *MemoryStore {
 	}
 }
 
-func (s *MemoryStore) InsertProject(name string) (domain.Project, error) {
+func (s *MemoryStore) InsertProject(ctx context.Context, name string) (domain.Project, error) {
 	p := domain.Project{
 		ID:        uuid.New(),
 		Name:      name,
@@ -43,7 +44,7 @@ func (s *MemoryStore) InsertProject(name string) (domain.Project, error) {
 	return p, nil
 }
 
-func (s *MemoryStore) GetProject(id uuid.UUID) (domain.Project, error) {
+func (s *MemoryStore) GetProject(ctx context.Context, id uuid.UUID) (domain.Project, error) {
 	s.mu.RLock()
 	p, ok := s.projects[id]
 	s.mu.RUnlock()
@@ -55,7 +56,7 @@ func (s *MemoryStore) GetProject(id uuid.UUID) (domain.Project, error) {
 	return p, nil
 }
 
-func (s *MemoryStore) ListProjects() ([]domain.Project, error) {
+func (s *MemoryStore) ListProjects(ctx context.Context) ([]domain.Project, error) {
 	s.mu.RLock()
 	projects := make([]domain.Project, 0, len(s.projects))
 	for _, p := range s.projects {
@@ -72,7 +73,7 @@ func (s *MemoryStore) ListProjects() ([]domain.Project, error) {
 	return projects, nil
 }
 
-func (s *MemoryStore) InsertTask(projectID uuid.UUID, title, description string) (domain.Task, error) {
+func (s *MemoryStore) InsertTask(ctx context.Context, projectID uuid.UUID, title, description string) (domain.Task, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -97,7 +98,7 @@ func (s *MemoryStore) InsertTask(projectID uuid.UUID, title, description string)
 	return t, nil
 }
 
-func (s *MemoryStore) ListTasks(projectID uuid.UUID) ([]domain.Task, error) {
+func (s *MemoryStore) ListTasks(ctx context.Context, projectID uuid.UUID) ([]domain.Task, error) {
 	s.mu.RLock()
 	if _, ok := s.projects[projectID]; !ok {
 		s.mu.RUnlock()
@@ -127,7 +128,7 @@ func (s *MemoryStore) ListTasks(projectID uuid.UUID) ([]domain.Task, error) {
 	return tasks, nil
 }
 
-func (s *MemoryStore) UpdateTask(projectID, taskID uuid.UUID, update TaskUpdate) (domain.Task, error) {
+func (s *MemoryStore) UpdateTask(ctx context.Context, projectID, taskID uuid.UUID, update TaskUpdate) (domain.Task, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

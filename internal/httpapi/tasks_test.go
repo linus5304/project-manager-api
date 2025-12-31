@@ -60,7 +60,7 @@ func createTask(t *testing.T, ts *httptest.Server, projectID, title, desc string
 }
 
 func TestCreateTask_201_DefaultTodo(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 
@@ -95,7 +95,7 @@ func TestCreateTask_201_DefaultTodo(t *testing.T) {
 }
 
 func TestCreateTask_404_ProjectMissing(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 
@@ -118,7 +118,7 @@ func TestCreateTask_404_ProjectMissing(t *testing.T) {
 }
 
 func TestCreateTask_400_InvalidProjectID(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 
@@ -136,7 +136,7 @@ func TestCreateTask_400_InvalidProjectID(t *testing.T) {
 }
 
 func TestListTasks_200_Empty(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 
@@ -166,7 +166,7 @@ func TestListTasks_200_Empty(t *testing.T) {
 }
 
 func TestListTasks_404_ProjectMissing(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 
@@ -183,7 +183,7 @@ func TestListTasks_404_ProjectMissing(t *testing.T) {
 }
 
 func TestCreateTask_400_BlankTitle(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 
@@ -203,7 +203,7 @@ func TestCreateTask_400_BlankTitle(t *testing.T) {
 }
 
 func TestListTasks_200_NewestFirst(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 
@@ -250,7 +250,7 @@ func TestListTasks_200_NewestFirst(t *testing.T) {
 }
 
 func TestUpdateTask_200_StatusOnly(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 
@@ -286,7 +286,7 @@ func TestUpdateTask_200_StatusOnly(t *testing.T) {
 }
 
 func TestUpdateTask_200_TitleAndDescription(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 
@@ -319,7 +319,7 @@ func TestUpdateTask_200_TitleAndDescription(t *testing.T) {
 }
 
 func TestUpdateTask_400_EmptyBody(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 
@@ -344,7 +344,7 @@ func TestUpdateTask_400_EmptyBody(t *testing.T) {
 }
 
 func TestUpdateTask_400_InvalidStatus(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 
@@ -369,7 +369,7 @@ func TestUpdateTask_400_InvalidStatus(t *testing.T) {
 }
 
 func TestUpdateTask_404_TaskMissing(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 

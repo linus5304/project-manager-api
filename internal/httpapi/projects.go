@@ -34,7 +34,7 @@ func (app *Application) createProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p, err := app.store.InsertProject(input.Name)
+	p, err := app.store.InsertProject(r.Context(), input.Name)
 	if err != nil {
 		serverErrorResponse(w, r, err)
 		return
@@ -52,7 +52,7 @@ func (app *Application) getProject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p, err := app.store.GetProject(id)
+	p, err := app.store.GetProject(r.Context(), id)
 	if err != nil {
 		if errors.Is(err, store.ErrNotFound) {
 			notFoundResponse(w, r)
@@ -83,7 +83,7 @@ func (app *Application) listProjects(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	all, err := app.store.ListProjects()
+	all, err := app.store.ListProjects(r.Context())
 	if err != nil {
 		serverErrorResponse(w, r, err)
 		return
