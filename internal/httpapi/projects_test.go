@@ -10,7 +10,7 @@ import (
 )
 
 func TestCreateProject_201(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 
@@ -43,7 +43,7 @@ func TestCreateProject_201(t *testing.T) {
 }
 
 func TestCreateProject_400_WhenNameMissing(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 
@@ -61,7 +61,7 @@ func TestCreateProject_400_WhenNameMissing(t *testing.T) {
 }
 
 func TestGetProject_200(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 
@@ -105,7 +105,7 @@ func TestGetProject_200(t *testing.T) {
 }
 
 func TestGetProject_400_InvalidID(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 
@@ -122,7 +122,7 @@ func TestGetProject_400_InvalidID(t *testing.T) {
 }
 
 func TestGetProject_404_NotFound(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 
@@ -140,7 +140,7 @@ func TestGetProject_404_NotFound(t *testing.T) {
 }
 
 func TestListProjects_200_Empty(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 
@@ -178,7 +178,7 @@ func TestListProjects_200_Empty(t *testing.T) {
 }
 
 func TestListProjects_200_NewestFirst(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 
@@ -235,7 +235,7 @@ func TestListProjects_200_NewestFirst(t *testing.T) {
 }
 
 func TestListProjects_400_InvalidPage(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 

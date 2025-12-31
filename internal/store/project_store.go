@@ -1,6 +1,8 @@
 package store
 
 import (
+	"context"
+
 	"github.com/google/uuid"
 	"github.com/linus5304/project-manager-api/internal/domain"
 )
@@ -12,11 +14,11 @@ type TaskUpdate struct {
 }
 
 type ProjectStore interface {
-	InsertProject(name string) (domain.Project, error)
-	GetProject(id uuid.UUID) (domain.Project, error)
-	ListProjects() ([]domain.Project, error)
+	InsertProject(ctx context.Context, name string) (domain.Project, error)
+	GetProject(ctx context.Context, id uuid.UUID) (domain.Project, error)
+	ListProjects(ctx context.Context) ([]domain.Project, error)
 
-	InsertTask(projectID uuid.UUID, title, description string) (domain.Task, error)
-	ListTasks(projectID uuid.UUID) ([]domain.Task, error)
-	UpdateTask(projectID, taskID uuid.UUID, update TaskUpdate) (domain.Task, error)
+	InsertTask(ctx context.Context, projectID uuid.UUID, title, description string) (domain.Task, error)
+	ListTasks(ctx context.Context, projectID uuid.UUID) ([]domain.Task, error)
+	UpdateTask(ctx context.Context, projectID, taskID uuid.UUID, update TaskUpdate) (domain.Task, error)
 }

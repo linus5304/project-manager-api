@@ -8,7 +8,7 @@ import (
 )
 
 func TestHealthz(t *testing.T) {
-	app := NewApplication()
+	app := newTestApp()
 	ts := httptest.NewServer(app.Routes())
 	t.Cleanup(ts.Close)
 

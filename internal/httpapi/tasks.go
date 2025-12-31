@@ -36,7 +36,7 @@ func (app *Application) createTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	t, err := app.store.InsertTask(projectID, input.Title, input.Description)
+	t, err := app.store.InsertTask(r.Context(), projectID, input.Title, input.Description)
 	if err != nil {
 		if errors.Is(err, store.ErrProjectNotFound) {
 			notFoundResponse(w, r)
@@ -56,7 +56,7 @@ func (app *Application) listTasks(w http.ResponseWriter, r *http.Request) {
 		badRequestResponse(w, r, errors.New("invalid project id"))
 		return
 	}
-	tasks, err := app.store.ListTasks(projectID)
+	tasks, err := app.store.ListTasks(r.Context(), projectID)
 	if err != nil {
 		if errors.Is(err, store.ErrProjectNotFound) {
 			notFoundResponse(w, r)
@@ -143,7 +143,7 @@ func (app *Application) updateTask(w http.ResponseWriter, r *http.Request) {
 		Status:      input.Status,
 	}
 
-	updated, err := app.store.UpdateTask(projectID, taskID, update)
+	updated, err := app.store.UpdateTask(r.Context(), projectID, taskID, update)
 	if err != nil {
 		if errors.Is(err, store.ErrProjectNotFound) || errors.Is(err, store.ErrTaskNotFound) {
 			notFoundResponse(w, r)

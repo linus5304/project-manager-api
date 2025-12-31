@@ -6,8 +6,8 @@ type Application struct {
 	store store.ProjectStore
 }
 
-func NewApplication() *Application {
+func NewApplication(store store.ProjectStore) *Application {
 	return &Application{
-		store: store.NewMemoryStore(),
+		store: store,
 	}
 }
