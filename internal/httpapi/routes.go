@@ -14,6 +14,9 @@ func (app *Application) Routes() http.Handler {
 	mux.HandleFunc("GET /v1/projects/{id}/tasks", app.listTasks)
 	mux.HandleFunc("PATCH /v1/projects/{projectId}/tasks/{taskId}", app.updateTask)
 
+	mux.HandleFunc("GET /livez", app.livez)
+	mux.HandleFunc("GET /readyz", app.readyz)
+
 	h := http.Handler(mux)
 	h = app.logRequestMiddleware(h)
 	h = app.recoverPanicMiddleware(h)
