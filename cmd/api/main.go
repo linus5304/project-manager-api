@@ -2,14 +2,19 @@ package main
 
 import (
 	"context"
+	"errors"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/linus5304/project-manager-api/internal/httpapi"
 	"github.com/linus5304/project-manager-api/internal/store"
 )
+
+type closer interface{ Close() }
 
 func main() {
 	addr := ":4000"
@@ -17,10 +22,23 @@ func main() {
 		addr = v
 	}
 
+	// Shutdown timeout (default 10s)
+	shutdownTimeout := 10 * time.Second
+	if v := os.Getenv("SHUTDOWN_TIMEOUT"); v != "" {
+		if d, err := time.ParseDuration(v); err == nil {
+			shutdownTimeout = d
+		} else {
+			log.Fatalf("invalid SHUTDOWN_TIMEOUT: %v", err)
+		}
+	}
+
+	// Store selection
 	var st store.ProjectStore
+	var stCloser closer
 
 	dsn := os.Getenv("DATABASE_URL")
-	if dsn != "" {
+	if dsn == "" {
+		log.Printf("INFO: DATABASE_URL not set; using MemoryStore")
 		st = store.NewMemoryStore()
 	} else {
 		startCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -30,8 +48,8 @@ func main() {
 		if err != nil {
 			log.Fatalf("unable to connect to database: %v", err)
 		}
-		defer pg.Close()
 		st = pg
+		stCloser = pg // close later, after shutdown
 	}
 
 	app := httpapi.NewApplication(st)
@@ -44,6 +62,39 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	log.Printf("starting server on %s", addr)
-	log.Fatal(srv.ListenAndServe())
+	// Start server
+	errCh := make(chan error, 1)
+	go func() {
+		log.Printf("starting server on %s", addr)
+		errCh <- srv.ListenAndServe()
+	}()
+
+	// Wait for signal OR server error
+	sigCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	select {
+	case <-sigCtx.Done():
+		log.Printf("INFO: shutdown signal received")
+	case err := <-errCh:
+		if err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("server error: %v", err)
+		}
+		// If ErrServerClosed, it means shutdown happened elsewhere; continue to cleanup.
+	}
+
+	// Graceful shutdown with deadline
+	if err := shutdownServer(srv, shutdownTimeout); err != nil {
+		log.Printf("ERROR: shutdown: %v", err)
+	}
+
+	err := <-errCh
+	if err != nil && !errors.Is(err, http.ErrServerClosed) {
+		log.Printf("ERROR: server returned: %v", err)
+	}
+
+	if stCloser != nil {
+		stCloser.Close()
+	}
+	log.Printf("INFO: server stopped")
 }
