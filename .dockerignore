@@ -1,0 +1,7 @@
+.git
+.vscode
+.cursor
+**/*_test.go
+tmp
+bin
+*.log
