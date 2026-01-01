@@ -21,6 +21,10 @@ type PostgresStore struct {
 
 var _ ProjectStore = (*PostgresStore)(nil)
 
+func (s *PostgresStore) Ping(ctx context.Context) error {
+	return s.pool.Ping(ctx)
+}
+
 func NewPostgresStore(ctx context.Context, dsn string) (*PostgresStore, error) {
 	pool, err := pgxpool.New(ctx, dsn)
 	if err != nil {
